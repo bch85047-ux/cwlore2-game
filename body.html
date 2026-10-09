@@ -1,0 +1,120 @@
+<header class="hd">
+  <div class="brand"><span class="mk">皇冠档案</span><span class="en">CROWN ARCHIVE</span></div>
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-v="cards">图鉴<span class="n" id="tbCards"></span></button>
+    <button class="tab" data-v="ladder">段位</button>
+    <button class="tab" data-v="factions">势力</button>
+    <button class="tab" data-v="gloss">词条<span class="n" id="tbGloss"></span></button>
+  </nav>
+  <div class="hd-r"><span class="hd-date" id="hdDate"></span></div>
+</header>
+
+<main class="wrap">
+
+  <!-- 图鉴 -->
+  <section id="v-cards" class="v on">
+    <aside class="side">
+      <div class="srch"><input id="q" type="search" placeholder="姓名 / 卡组 / 关键词" autocomplete="off"></div>
+      <div class="grps">
+        <div>
+          <h5>个人实力</h5>
+          <div id="fTier"></div>
+        </div>
+        <div>
+          <h5>势力归属</h5>
+          <div id="fFac"></div>
+        </div>
+        <div>
+          <h5>卡组类型</h5>
+          <div id="fTag"></div>
+        </div>
+      </div>
+      <div class="reset"><button id="clr">清除全部筛选</button></div>
+    </aside>
+    <div>
+      <div class="bar">
+        <span class="cnt" id="cnt"></span>
+        <span class="sp"></span>
+        <div class="sorts" id="sorts">
+          <button data-s="orig" class="on">原序</button>
+          <button data-s="tier">梯队</button>
+          <button data-s="len">卡组</button>
+          <button data-s="az">姓名</button>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- 段位 -->
+  <section id="v-ladder" class="v">
+    <div class="page">
+      <div class="pg-h">
+        <h1 class="pg-t">段位阶梯</h1>
+        <p class="pg-s">卡兹帝国段位 25—1，只对中下实力者有用。1 段才是见强者的门槛。1 段之间的差距，比 1 段和 25 段之间更加恐怖。</p>
+      </div>
+      <hr class="pg-rule">
+      <div class="block">
+        <div class="blk-h"><h3>升段分值</h3><span class="en">RANK POINTS</span><span class="sp"></span><span class="hint">条长按对数刻度，非线性</span></div>
+        <div class="lad" id="lad"></div>
+      </div>
+      <div class="block">
+        <div class="blk-h"><h3>分段规则</h3><span class="en">SEGMENT RULES</span></div>
+        <div class="rules" id="rules"></div>
+      </div>
+      <div class="block">
+        <div class="blk-h"><h3>OCC 晋级漏斗</h3><span class="en">OCC FUNNEL</span><span class="sp"></span><span class="hint">卡兹帝国全国性卡牌大赛，仍在办</span></div>
+        <div class="funnel" id="funnel"></div>
+      </div>
+      <div class="block">
+        <div class="blk-h"><h3>段位数值缺口</h3><span class="en">OPEN QUESTIONS</span><span class="sp"></span><span class="hint">做排位前必须定的</span></div>
+        <div class="gaps" id="gaps"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 势力 -->
+  <section id="v-factions" class="v">
+    <div class="page">
+      <div class="pg-h">
+        <h1 class="pg-t">势力版图</h1>
+        <p class="pg-s">旧大陆由卡兹帝国统一，靠皇冠维持；新大陆无统一，凹槽为霸主，多国并立。梯队按国家整体实力计算，不按头目个人实力计算。</p>
+      </div>
+      <hr class="pg-rule">
+      <div class="land" id="land"></div>
+      <div class="note">
+        <h4>梯队口径</h4>
+        <p>梯队按国家整体实力计算，不按头目个人实力计算。架子班是超国家集团，成员个人实力与国家梯队无关。架子班第一梯队成员（七星、苏苏）个人实力按“顶尖”标注，与其所属国家的国家梯队无关。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 词条 -->
+  <section id="v-gloss" class="v">
+    <div class="page">
+      <div class="pg-h">
+        <h1 class="pg-t">机制词条</h1>
+        <p class="pg-s">从设定里抽出的规则名词。每条给出定义、出处，以及做成游戏时的机制映射。词条是引擎代码之前最先要写死的东西。</p>
+      </div>
+      <hr class="pg-rule">
+      <div class="glf" id="glf"></div>
+      <div class="gls" id="gls"></div>
+    </div>
+  </section>
+
+  <footer class="ft">
+    <span>皇冠档案 · CROWN ARCHIVE · 单文件本地生成</span>
+    <span id="ftStat"></span>
+  </footer>
+</main>
+
+<div class="ov" id="ov"></div>
+<div class="sh" id="sh"><div id="shIn"></div></div>
+
+<script>
+/* ── DATA ─────────────────────────────── */
+__DATA__
+__APP__
+</script>
+</body>
+</html>
