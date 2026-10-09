@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>皇冠 · 卡牌战斗</title>
+<link rel="stylesheet" href="style.css?v=12">
+</head>
+<body>
+<div id="app">
+  <div class="bar">
+    <span class="brand">皇冠 · 卡牌战斗</span>
+    <span id="turnInfo"></span>
+    <button id="btnGuide" class="icon-btn" title="新手指南">?</button>
+    <button id="btnTheme" class="icon-btn" title="切换主题">暗</button>
+    <button id="btnNew">新对局</button>
+    <button id="btnEnd">结束回合</button>
+  </div>
+  <div id="board">
+    <div class="side top" id="sideTop">
+      <div class="hero" id="heroTop"></div>
+      <div class="hand" id="handTop"></div>
+      <div class="field" id="fieldTop"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="side bot" id="sideBot">
+      <div class="field" id="fieldBot"></div>
+      <div class="hand" id="handBot"></div>
+      <div class="hero" id="heroBot"></div>
+    </div>
+  </div>
+  <aside id="log"></aside>
+  <div id="banner"><div class="t"></div><div class="w"></div><div class="s"></div></div>
+  <div id="modal"><div id="modal-content"></div></div>
+</div>
+<script src="cards.js?v=12"></script>
+<script src="engine.js?v=12"></script>
+<script src="ai.js?v=12"></script>
+<script src="ui.js?v=12"></script>
+</body>
+</html>
