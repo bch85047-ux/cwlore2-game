@@ -64,7 +64,13 @@ function startGame(){
 }
 
 $('#btnStart').onclick = startGame;
-initLobby();
+
+// 等待DOM加载完成后初始化大厅
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLobby);
+} else {
+  initLobby();
+}
 var KW_LABEL = {gun:'火炮',taunt:'嘲讽',charge:'冲锋',deathrattle:'亡语',soviet:'苏维埃',draw1:'抽1',draw3:'抽3',draw4:'抽4',buffall:'装填',buffall33:'全体+3',buff22:'+2/+2',debuff22:'-2/-2',dmg2:'伤害2',dmgface3:'斩杀3',dmgall2:'群伤2',dmgall12:'核12',dmgall15:'清洗15',gunburst:'饱和',heal3:'治疗3',destroyprod1:'削产1',limitunit:'封锁',skipdraw3:'慢节奏',finito:'终结',chargeall:'全员冲锋',piratedraw:'劫掠',peek2:'侦察2',peek3:'侦察3',discdraw:'弃1抽2',prodmax1:'+1产出',revolution:'革命',draw3nolimit:'无限产出'};
 function kwLabel(k){
  return KW_LABEL[k] || ({buff22:'+2/+2',debuff22:'-2/-2'}[k]) || k;
