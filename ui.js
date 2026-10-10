@@ -457,5 +457,4 @@ $('#modal').onclick = function(e){ if (e.target === this) hideGuide(); };
 window.addEventListener('keydown', function(e){
  if (e.key === 'Escape'){ selUnit = null; needTgt = null; hideGuide(); render(); }
 });
-newGame();
 })();
