@@ -97,6 +97,8 @@ function renderTop(){
  B.p[1].board.forEach(function(u){
  var o = {uid:u.uid, targetable: canTargetUnit(u)};
  var el = cardHTML(u, o);
+ // 修复：添加敌方单位点击事件
+ el.onclick = function(){ onUnitClick(1, u); };
  f.appendChild(el);
  });
 }
@@ -137,10 +139,10 @@ function render(){
 }
 
 function canTargetUnit(u){
- if (needTgt) return true;
+ if (needTgt != null) return true;
  if (selUnit == null || B.over) return false;
  var me = E.cur(B);
- if (me.board.some(function(x){return x.uid === selUnit;}) === false) return false;
+ if (!me.board.some(function(x){return x.uid === selUnit;})) return false;
  return true;
 }
 

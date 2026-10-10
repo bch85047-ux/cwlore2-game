@@ -54,25 +54,34 @@ function draw(b,p,n){
 function endOfTurnSkill(b,p){
   // 下水 火炮体系：回合结束时每门火炮对随机敌人造成1
   if(p.key==='shuishui'){
-    var guns=p.board.filter(function(u){return u.kw.indexOf('gun')>=0;});
-    if(!guns.length) return;
     var e=opp(b);
-    var hits=[];
-    for(var i=0;i<guns.length;i++){
-      var targets=e.board.slice();
-      if(targets.length) targets.push({hero:true});
-      if(!targets.length) continue;
-      var t=targets[Math.floor(Math.random()*targets.length)];
-      if(t.hero){ e.life-=1; b.log.push(log('火炮打击 '+e.name+'，-1')); }
-      else { t.hp-=1; if(t.hp<=0) hits.push(t); }
+    var guns=p.board.filter(function(u){return u.kw.indexOf('gun')>=0;});
+    if(guns.length){
+      var hits=[];
+      for(var i=0;i<guns.length;i++){
+        var targets=e.board.slice();
+        if(targets.length) targets.push({hero:true});
+        if(!targets.length) continue;
+        var t=targets[Math.floor(Math.random()*targets.length)];
+        if(t.hero){ e.life-=1; b.log.push(log('火炮打击 '+e.name+'，-1')); }
+        else { t.hp-=1; if(t.hp<=0) hits.push(t); }
+      }
+      if(hits.length){
+        // 修复：遍历 e.board，过滤掉被击杀的敌方单位
+        var keep=[];
+        e.board.forEach(function(u){ 
+          if(hits.indexOf(u)>=0){ 
+            u.discard=true; 
+            dealDeathrattle(b,e,u); 
+          } else {
+            keep.push(u);
+          }
+        });
+        e.board=keep;
+        b.log.push(log(hits.length+' 个单位被摧毁','combat'));
+      }
     }
-    if(hits.length){
-      var keep=[];
-      p.board.forEach(function(u){ if(hits.indexOf(u)>=0){ u.discard=true; dealDeathrattle(b,e,u); } else keep.push(u); });
-      e.board=keep;
-      b.log.push(log(hits.length+' 个单位被摧毁','combat'));
-    }
-    // 苏联红军：回合结束 +1/+1 本回合
+    // 苏联红军：回合结束 +1/+1 本回合（移到外面，确保没有火炮时也触发）
     p.board.forEach(function(u){
       if(u.kw.indexOf('soviet')>=0 && u.hp>0){ u.buff+=1; u.buffhp+=1; }
     });
