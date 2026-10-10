@@ -57,19 +57,46 @@ function updateLobbySelection(){
  }
 }
 
-function startGame(){
- $('#lobby').hidden = true;
- $('#app').hidden = false;
- newGame();
+// 英雄名称到卡组键的映射
+var HERO_NAME_TO_KEY = {
+ '克里斯蒂安松':'kristiansen', 'Jking7':'jking7', '八幡':'yato', 'SIE':'sie',
+ 'Tangentle/Spoker':'tangentle', '66better/黄立新':'huang', '青':'qing', '张猪':'zhangzhu',
+ '停尸':'tingshi', '王九日':'wang', '发廊':'falon', '486':'486',
+ '花咲里':'huaxli', '猪瘟鱼':'zhufengyu', '偏信':'pianxin', '下水':'shuishui',
+ '阿伟':'awei', '七星':'qixing', '白猫':'baimao', '小岛':'xiaodao',
+ '南京市民李先生':'nanjing', '叶戈尔':'yegor', '苏苏':'susu', '榻榻米':'tatami',
+ '木头的滚动':'mutou', '蕾米':'remei', '敦贺联队':'tsuwabuki', '淘金':'taojin',
+ '假战':'jiazhan', '绘梨衣':'huiliyi', 'Zwest':'zwest', '045':'045',
+ '爻':'yao', '逆流':'niliu', '木桶饭':'mutong', '汐':'xi',
+ '愚蠢':'yongyin', '梦的原野':'meng', '皇冠最初拥有者':'huangguan',
+ '肉铺子（已故）':'roupu', '上书房行走':'shangshufang'
+};
+
+function getHeroCardByName(name){
+ var key = HERO_NAME_TO_KEY[name] || 'shuishui';
+ return CARDS[key] || CARDS.shuishui;
 }
 
-$('#btnStart').onclick = startGame;
+function startGame(){
+ var heroCard = getHeroCardByName(lobbyState.hero);
+ var oppCard = getHeroCardByName(lobbyState.opponent);
+ $('#lobby').hidden = true;
+ $('#app').hidden = false;
+ B = E.newBattle(heroCard, oppCard);
+ selUnit = null; needTgt = null; busy = false; locked = false;
+ $('#banner').classList.remove('show');
+ renderLog(); render();
+}
 
 // 等待DOM加载完成后初始化大厅
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLobby);
+  document.addEventListener('DOMContentLoaded', function(){
+    initLobby();
+    $('#btnStart').onclick = startGame;
+  });
 } else {
   initLobby();
+  $('#btnStart').onclick = startGame;
 }
 var KW_LABEL = {gun:'火炮',taunt:'嘲讽',charge:'冲锋',deathrattle:'亡语',soviet:'苏维埃',draw1:'抽1',draw3:'抽3',draw4:'抽4',buffall:'装填',buffall33:'全体+3',buff22:'+2/+2',debuff22:'-2/-2',dmg2:'伤害2',dmgface3:'斩杀3',dmgall2:'群伤2',dmgall12:'核12',dmgall15:'清洗15',gunburst:'饱和',heal3:'治疗3',destroyprod1:'削产1',limitunit:'封锁',skipdraw3:'慢节奏',finito:'终结',chargeall:'全员冲锋',piratedraw:'劫掠',peek2:'侦察2',peek3:'侦察3',discdraw:'弃1抽2',prodmax1:'+1产出',revolution:'革命',draw3nolimit:'无限产出'};
 function kwLabel(k){
