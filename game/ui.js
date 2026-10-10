@@ -3,6 +3,67 @@
 var B = null, selUnit = null, needTgt = null, busy = false, locked = false;
 window.AI_SIDE = 1;
 var $ = function(s){ return document.querySelector(s); };
+
+// 大厅逻辑
+var lobbyState = { hero: null, opponent: null };
+var lobbyHeroes = ['下水', '七星', '苏苏', '字母', '青', '张猪'];
+var lobbyOpponents = ['下水', '七星', '苏苏', '字母', '青', '张猪'];
+
+function initLobby(){
+ var heroGrid = $('#heroGrid');
+ var oppGrid = $('#oppGrid');
+ if (!heroGrid || !oppGrid) return;
+ 
+ heroGrid.innerHTML = '';
+ lobbyHeroes.forEach(function(h){
+   var btn = document.createElement('button');
+   btn.className = 'hero-btn';
+   btn.textContent = h;
+   btn.onclick = function(){
+     lobbyState.hero = h;
+     updateLobbySelection();
+   };
+   heroGrid.appendChild(btn);
+ });
+ 
+ oppGrid.innerHTML = '';
+ lobbyOpponents.forEach(function(o){
+   var btn = document.createElement('button');
+   btn.className = 'opp-btn';
+   btn.textContent = o;
+   btn.onclick = function(){
+     lobbyState.opponent = o;
+     updateLobbySelection();
+   };
+   oppGrid.appendChild(btn);
+ });
+ 
+ updateLobbySelection();
+}
+
+function updateLobbySelection(){
+ var heroBtns = $('#heroGrid').children;
+ for (var i = 0; i < heroBtns.length; i++){
+   heroBtns[i].className = 'hero-btn' + (heroBtns[i].textContent === lobbyState.hero ? ' selected' : '');
+ }
+ var oppBtns = $('#oppGrid').children;
+ for (var i = 0; i < oppBtns.length; i++){
+   oppBtns[i].className = 'opp-btn' + (oppBtns[i].textContent === lobbyState.opponent ? ' selected' : '');
+ }
+ var btnStart = $('#btnStart');
+ if (btnStart){
+   btnStart.disabled = !(lobbyState.hero && lobbyState.opponent);
+ }
+}
+
+function startGame(){
+ $('#lobby').hidden = true;
+ $('#app').hidden = false;
+ newGame();
+}
+
+$('#btnStart').onclick = startGame;
+initLobby();
 var KW_LABEL = {gun:'火炮',taunt:'嘲讽',charge:'冲锋',deathrattle:'亡语',soviet:'苏维埃',draw1:'抽1',draw3:'抽3',draw4:'抽4',buffall:'装填',buffall33:'全体+3',buff22:'+2/+2',debuff22:'-2/-2',dmg2:'伤害2',dmgface3:'斩杀3',dmgall2:'群伤2',dmgall12:'核12',dmgall15:'清洗15',gunburst:'饱和',heal3:'治疗3',destroyprod1:'削产1',limitunit:'封锁',skipdraw3:'慢节奏',finito:'终结',chargeall:'全员冲锋',piratedraw:'劫掠',peek2:'侦察2',peek3:'侦察3',discdraw:'弃1抽2',prodmax1:'+1产出',revolution:'革命',draw3nolimit:'无限产出'};
 function kwLabel(k){
  return KW_LABEL[k] || ({buff22:'+2/+2',debuff22:'-2/-2'}[k]) || k;

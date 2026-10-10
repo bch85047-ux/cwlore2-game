@@ -223,3 +223,62 @@ button:disabled { background: var(--border); color: var(--text-2); cursor: defau
   .card .body { display: none; }
   .hand { min-height: 72px; }
 }
+
+/* 大厅样式 */
+#lobby {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #0a0f11 0%, #141c20 50%, #0a0f11 100%);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.lobby-content {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 16px; padding: 30px; max-width: 600px; width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.lobby-content h1 {
+  font-size: 24px; text-align: center; margin-bottom: 8px;
+  color: var(--gold); text-shadow: 0 2px 10px rgba(212,164,93,.3);
+  font-weight: 700; letter-spacing: .05em;
+}
+.lobby-content p {
+  text-align: center; color: var(--text-2); margin-bottom: 24px; font-size: 14px;
+}
+.lobby-section { margin-bottom: 20px; }
+.lobby-section label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text); margin-bottom: 10px; letter-spacing: .05em;
+}
+.hero-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.hero-btn, .opp-btn {
+  border: 2px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); color: var(--text);
+  padding: 12px 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  font-family: inherit;
+}
+.hero-btn:hover, .opp-btn:hover {
+  border-color: #617179; background: #1b2529;
+}
+.hero-btn.selected, .opp-btn.selected {
+  border-color: var(--gold); background: linear-gradient(180deg, #242a24, #161d1c);
+  box-shadow: 0 0 12px rgba(212,164,93,.3); color: #f0d18e;
+}
+.btn-start {
+  display: block; width: 100%; margin-top: 10px;
+  padding: 16px; font-size: 18px; font-weight: 700;
+  background: linear-gradient(180deg, #e0b370, #b98a45);
+  border: 1px solid #e8c88c; border-radius: 12px;
+  color: #2a1c06; cursor: pointer; letter-spacing: .1em;
+  transition: all .15s; font-family: inherit;
+}
+.btn-start:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e8c88c, #d4a45d);
+  box-shadow: 0 4px 16px rgba(212,164,93,.4);
+}
+.btn-start:disabled {
+  opacity: .4; cursor: not-allowed;
+}
