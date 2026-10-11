@@ -7,9 +7,36 @@
 (function (root) {
   'use strict';
   var HD = root.HeroData, CD = root.CardData, RL = root.Roguelike, E = root.Engine, AI = root.AI;
+  /* SVG 图标：12px 内联 */
+  var ICO = {
+    hp: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 14S2 9.5 2 5.5A3.5 3.5 0 0 1 8 3.5a3.5 3.5 0 0 1 6 2c0 4-6 8.5-6 8.5z" fill="currentColor"/></svg>',
+    arm: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L2 4v4c0 4 3 7 6 7s6-3 6-7V4L8 1z" fill="currentColor"/></svg>',
+    load: '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor" opacity=".3"/></svg>',
+    hand: '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="1" width="10" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.5"/></svg>',
+    lib: '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="4" y="1" width="8" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="8" height="11" rx="1" fill="currentColor" opacity=".4"/><rect x="2" y="5" width="8" height="11" rx="1" fill="currentColor" opacity=".25"/></svg>',
+    frag: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L14 8L8 15L2 8Z" fill="currentColor"/></svg>',
+    gold: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M2 12V7l3-3 3 3 3-3 3 3v5H2z" fill="currentColor"/></svg>',
+    lock: '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor"/><path d="M5 7V4.5A3 3 0 0 1 11 4.5V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+    camp: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L1 14h14L8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="14" x2="11" y2="14" stroke="currentColor" stroke-width="1.5"/></svg>',
+    battle: '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M10 1l5 5-1.5 1.5L9 4 1 12l1 1 8-8 4.5 4.5L14 9l-5-5" fill="currentColor"/></svg>',
+    prod: '<svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2v6l4 2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'
+  };
+
 
   /* ---------------- 存档 ---------------- */
   var SAVE_KEY = 'huanguan.save.v1';
+  var ICO_HP = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 14S2 9.5 2 5.5A3.5 3.5 0 0 1 8 3.5a3.5 3.5 0 0 1 6 2c0 4-6 8.5-6 8.5z" fill="currentColor"/></svg>';
+  var ICO_ARM = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L2 4v4c0 4 3 7 6 7s6-3 6-7V4L8 1z" fill="currentColor"/></svg>';
+  var ICO_LOAD = '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor" opacity=".3"/></svg>';
+  var ICO_HAND = '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="1" width="10" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1.5"/></svg>';
+  var ICO_LIB = '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="4" y="1" width="8" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="8" height="11" rx="1" fill="currentColor" opacity=".4"/><rect x="2" y="5" width="8" height="11" rx="1" fill="currentColor" opacity=".25"/></svg>';
+  var ICO_FRAG = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L14 8L8 15L2 8Z" fill="currentColor"/></svg>';
+  var ICO_GOLD = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M2 12V7l3-3 3 3 3-3 3 3v5H2z" fill="currentColor"/></svg>';
+  var ICO_LOCK = '<svg viewBox="0 0 16 16" width="12" height="12"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor"/><path d="M5 7V4.5A3 3 0 0 1 11 4.5V7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  var ICO_CAMP = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 1L1 14h14L8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="14" x2="11" y2="14" stroke="currentColor" stroke-width="1.5"/></svg>';
+  var ICO_BATTLE = '<svg viewBox="0 0 16 16" width="12" height="12"><path d="M10 1l5 5-1.5 1.5L9 4 1 12l1 1 8-8 4.5 4.5L14 9l-5-5" fill="currentColor"/></svg>';
+  var ICO_PROD = '<svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2v6l4 2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+
   function defaultSave() {
     return {
       frag: 0, gold: 1,
@@ -115,8 +142,8 @@
     var cur = '';
     if (!State.battle) {
       cur = '<div class="currency">' +
-        '<div title="碎片"><span class="ico frag">碎</span><b>' + State.save.frag + '</b></div>' +
-        '<div title="皇冠"><span class="ico gold">冠</span><b>' + State.save.gold + '</b></div>' +
+        '<div title="碎片"><span class="ico frag">' + ICO_FRAG + '</span><b>' + State.save.frag + '</b></div>' +
+        '<div title="皇冠"><span class="ico gold">' + ICO_GOLD + '</span><b>' + State.save.gold + '</b></div>' +
         '</div>';
     } else {
       cur = '<button class="end-btn" id="navQuit" style="padding:5px 14px;font-size:11px">退出</button>';
@@ -147,7 +174,7 @@
     var cls = 'card ' + (c.t === 'sp' ? 'spell' : (c.t === 'or' ? 'order' : ''));
     if (o.cls) cls += ' ' + o.cls;
     if (o.disabled) cls += ' cant';
-    var data = o.data ? ' data-i="' + o.data + '"' : '';
+    var data = (o.data !== undefined) ? ' data-i="' + o.data + '"' : '';
     var s = '<div class="' + cls + '"' + data + '>';
     s += '<div class="head">' +
       '<span class="cost' + (c.t === 'u' ? ' u' : '') + '">' + c.cost + '</span>' +
@@ -341,11 +368,11 @@
               '<div class="nm">' + esc(side.name) +
                 '<span class="nm-t">' + esc(side.hero.title) + '</span></div>' +
               '<div class="stats">' +
-                '<span class="hp"><span class="ico hp">血</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
-                (side.armor > 0 ? '<span class="arm"><span class="ico arm">甲</span><b>' + side.armor + '</b></span>' : '') +
-                '<span class="load"><span class="ico load">位</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
-                '<span><span class="ico hand">手</span><b>' + side.hand.length + '</b>/' + side.handMax + '</span>' +
-                '<span><span class="ico lib">库</span><b>' + side.deck.length + '</b></span>' +
+                '<span class="hp"><span class="ico hp">' + ICO_HP + '</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
+                (side.armor > 0 ? '<span class="arm"><span class="ico arm">' + ICO_ARM + '</span><b>' + side.armor + '</b></span>' : '') +
+                '<span class="load"><span class="ico load">' + ICO_LOAD + '</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
+                '<span><span class="ico hand">' + ICO_HAND + '</span><b>' + side.hand.length + '</b>/' + side.handMax + '</span>' +
+                '<span><span class="ico lib">' + ICO_LIB + '</span><b>' + side.deck.length + '</b></span>' +
               '</div>' +
             '</div>' +
             '<div class="pips">' + pips(side) + '</div>' +
@@ -358,19 +385,18 @@
         '</div>';
       }
       /* 敌方英雄：右对齐单行 */
-      return '<div class="b-row">' +
-        '<div class="spacer"></div>' +
+      return '<div class="b-row foe-row">' +
         '<div class="hero-box foe drop-zone' + (humanTurn && sel ? ' tgt-hero' : '') + '" data-act="hero-target"' +
           (humanTurn && sel ? ' style="cursor:crosshair"' : '') + '>' +
           '<div class="info">' +
             '<div class="nm">' + esc(side.name) +
               '<span class="nm-t">' + esc(side.hero.title) + '</span></div>' +
             '<div class="stats">' +
-              '<span class="hp"><span class="ico hp">血</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
-              (side.armor > 0 ? '<span class="arm"><span class="ico arm">甲</span><b>' + side.armor + '</b></span>' : '') +
-              '<span class="load"><span class="ico load">位</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
-              '<span><span class="ico hand">手</span><b>' + side.hand.length + '</b></span>' +
-              '<span><span class="ico lib">库</span><b>' + side.deck.length + '</b></span>' +
+              '<span class="hp"><span class="ico hp">' + ICO_HP + '</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
+              (side.armor > 0 ? '<span class="arm"><span class="ico arm">' + ICO_ARM + '</span><b>' + side.armor + '</b></span>' : '') +
+              '<span class="load"><span class="ico load">' + ICO_LOAD + '</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
+              '<span><span class="ico hand">' + ICO_HAND + '</span><b>' + side.hand.length + '</b></span>' +
+              '<span><span class="ico lib">' + ICO_LIB + '</span><b>' + side.deck.length + '</b></span>' +
             '</div>' +
           '</div>' +
           '<div class="av">' + esc(side.hero.name.charAt(0)) + '</div>' +
