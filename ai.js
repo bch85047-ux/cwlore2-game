@@ -1,82 +1,122 @@
-// 贪心 AI：能打就打、能杀就杀。不做前瞻，纯规则序。
-window.AI = (function(){
-'use strict';
-var E = null;
-function init(){ E = window.ENG; }
+/* ============================================================================
+ * 皇冠·卡牌战斗 — AI / AI
+ * ----------------------------------------------------------------------------
+ * 贪心决策，按当前局面价值排序：
+ *   1. 斩杀优先：法术/技能直伤 ≥ 对手剩余生命+承受值 → 立即施放
+ *   2. 清场：若敌方场面总攻击 ≥ 我方生命安全线，优先解场
+ *   3. 出牌：按「攻击价值 + 换牌价值」评分，取最高
+ *   4. 攻击：嘲讽优先，其次打能一击消灭的目标，最后打脸
+ * ========================================================================== */
+(function (root) {
+  'use strict';
+  var CD = root.CardData, E = root.Engine;
 
-function pick(cardList){
-  return cardList.slice().sort(function(a,b){ return a.cost - b.cost; });
-}
-
-// 打一张不需要目标的牌。返回是否成功。
-function playSimple(b, i){
-  return E.playCard(b, i);
-}
-
-// 给有目标的牌找目标：强化→己方最大攻击；削减→敌方最大攻击
-function pickTarget(b, p, e, kw){
-  var own = p.board.slice().sort(function(a,b){ return E.atk(b)-E.atk(a); });
-  var foe = e.board.slice().sort(function(a,b){ return E.atk(b)-E.atk(a); });
-  if (kw.indexOf('buff22') >= 0 && own.length) return {kind:'unit', id:own[0].uid};
-  if (kw.indexOf('debuff22') >= 0 && foe.length) return {kind:'unit', id:foe[0].uid};
-  return null;
-}
-
-function attackPhase(b){
-  var p = E.cur(b), e = E.opp(b);
-  var foeTaunt = e.board.filter(function(u){ return u.kw.indexOf('taunt') >= 0; });
-  var units = p.board.filter(function(u){ return u.ready && E.atk(u) > 0; });
-  for (var i = 0; i < units.length && !b.over; i++){
-    var u = units[i];
-    if (u.hp <= 0) continue;   // 之前被反伤打死
-    if (foeTaunt.length){
-      // 找最脆的嘲讽
-      var t = foeTaunt.slice().sort(function(a,b){ return E.hp(a)-E.hp(b); })[0];
-      E.attack(b, u.uid, {kind:'unit', id:t.uid});
-    } else if (e.board.length && e.life > 8){
-      // 场上有怪但英雄血厚：先清场
-      var t2 = e.board.slice().sort(function(a,b){ return E.atk(b)-E.atk(a); })[0];
-      E.attack(b, u.uid, {kind:'unit', id:t2.uid});
-    } else {
-      E.attack(b, u.uid, {kind:'hero'});
+  function cardScore(card) {
+    var s = 0;
+    if (card.t === 'u') {
+      s += card.atk * 1.0 + (card.hp || 0) * 0.5;
+      if ((card.kw || []).indexOf('taunt') >= 0) s += 1.5;
+      if ((card.kw || []).indexOf('charge') >= 0) s += 1.0;
+      if ((card.kw || []).indexOf('artillery') >= 0) s += 1.0;
+      if (card.eff && card.eff.die) s += card.eff.die * 0.5;
     }
-    if (u.hp <= 0) continue;
-    u.ready = false;
+    if (card.eff) {
+      if (card.eff.damageHero) s += card.eff.damageHero * 1.2;
+      if (card.eff.damageAll) s += card.eff.damageAll * 0.7;
+      if (card.eff.killWeak) s += 3;
+      if (card.eff.destroyAll) s += 4;
+      if (card.eff.draw) s += card.eff.draw * 1.1;
+      if (card.eff.healHero) s += card.eff.healHero * 0.4;
+      if (card.eff.forceDraw) s += card.eff.forceDraw * 0.5;
+      if (card.eff.scry) s += card.eff.scry * 0.4;
+      if (card.eff.handPollute) s += card.eff.handPollute * 0.6;
+      if (card.eff.buffAll) s += (card.eff.buffAll.atk + card.eff.buffAll.hp) * 0.3;
+      if (card.eff.gainProd) s += card.eff.gainProd * 0.5;
+      if (card.eff.prodDeny) s += card.eff.prodDeny * 1.5;
+      if (card.eff.finisher) s += 5;
+    }
+    return s;
   }
-  if (!b.over){
-    // 刷新嘲讽列表后剩余单位直取英雄
-    var left = p.board.filter(function(u){ return u.ready && E.atk(u) > 0; });
-    for (var j = 0; j < left.length && !b.over; j++) E.attack(b, left[j].uid, {kind:'hero'});
-  }
-}
 
-// 跑完整一个 AI 回合，分帧回调避免卡 UI
-function run(b, done){
-  init();
-  var p, e, plays = 0;
-  function step(){
-    if (b.over) return done();
-    p = E.cur(b); e = E.opp(b);
-    if (b.who === (window.AI_SIDE == null ? 1 : window.AI_SIDE)){
-      // 出牌阶段：从低费到高费
-      var guard = 0;
-      while (guard++ < 30 && !b.over){
-        var order = pick(p.hand).map(function(c){
-          return {idx: p.hand.indexOf(c), c: c};
-        }).filter(function(x){ return E.canPlay(b, p, x.c).ok; });
-        if (!order.length) break;
-        var first = order[0];
-        if (E.needsTarget(first.c)){
-          var t = pickTarget(b, p, e, first.c.kw);
-          if (t && E.playCard(b, first.idx, t)){ plays++; } else break;
-        } else if (E.playCard(b, first.idx)) { plays++; }
-        else break;
+  /* 单回合 AI：返回值 = 是否又执行了一步 */
+  function step(g, idx) {
+    var s = g.p[idx], o = g.p[idx ^ 1];
+    if (g.winner !== null) return false;
+
+    /* ---- 1. 技能 ---- */
+    var sc = E.skillCost(s.hero.ability);
+    if (s.prod >= sc && !s.skillUsed) {
+      var r = E.useSkill(g, idx);
+      if (!r.ok) s.skillUsed = true;
+      return true;
+    }
+
+    /* ---- 2. 出牌 ---- */
+    var best = -1, bestScore = -1, bestCost = -1;
+    for (var i = 0; i < s.hand.length; i++) {
+      var c = CD.CARDS[s.hand[i]];
+      if (!c || c.cost > s.prod) continue;
+      if (c.t === 'u' && s.board.length >= s.load) continue;
+      var score = cardScore(c);
+      /* 斩杀检测 */
+      if (c.eff && c.eff.damageHero && c.eff.damageHero >= o.hp + o.armor) score += 100;
+      /* 同分取费用高（省产出） */
+      if (score > bestScore || (score === bestScore && c.cost > bestCost)) {
+        bestScore = score; bestCost = c.cost; best = i;
       }
-      setTimeout(function(){ attackPhase(b); setTimeout(function(){ E.endTurn(b); done(); }, 30); }, 30);
-    } else { done(); }
-  }
-  step();
-}
+    }
+    if (best >= 0) {
+      var r2 = E.playCard(g, idx, best);
+      if (r2.ok) return true;
+    }
 
-return {run:run, isAI:function(b){ return b.who === (window.AI_SIDE == null ? 1 : window.AI_SIDE); }};
-})();
+    /* ---- 3. 攻击 ---- */
+    var taunts = o.board.filter(function (x) { return x.kw.indexOf('taunt') >= 0; });
+    for (var j = 0; j < s.board.length; j++) {
+      var u = s.board[j];
+      if (u.summonSick || u.attacked <= 0 || u.atk <= 0) continue;
+
+      var tgt = null;
+      if (taunts.length) {
+        /* 嘲讽：优先能一换一的 */
+        var cands = taunts.slice().sort(function (a, b) { return a.hp - b.hp; });
+        for (var k = 0; k < cands.length; k++) {
+          if (u.atk >= cands[k].hp && !(cands[k].ward)) { tgt = cands[k].uid; break; }
+          if (u.atk >= cands[k].hp) tgt = cands[k].uid;
+        }
+        if (tgt === null) tgt = cands[0].uid;
+      } else if (o.board.length) {
+        /* 无嘲讽：打能消灭的，其次打攻击最高的 */
+        var live = o.board.filter(function (x) { return x.hp <= u.atk; });
+        if (live.length) {
+          live.sort(function (a, b) { return b.atk - a.atk; });
+          tgt = live[0].uid;
+        } else {
+          /* 我方生命安全线：敌方总攻 > 我方剩余生命时先清场 */
+          var enemyPower = o.board.reduce(function (t, x) { return t + x.atk; }, 0);
+          if (enemyPower > s.hp + s.armor * 0.5) {
+            var sorted = o.board.slice().sort(function (a, b) { return b.atk - a.atk; });
+            tgt = sorted[0].uid;
+          } else {
+            tgt = 'hero';   /* 直接打脸 */
+          }
+        }
+      } else {
+        tgt = 'hero';
+      }
+
+      var r3 = E.attack(g, idx, u.uid, tgt);
+      if (r3.ok) return true;
+    }
+    return false;
+  }
+
+  /* 跑完一整回合 */
+  function fullTurn(g, idx) {
+    var guard = 0;
+    while (step(g, idx) && guard++ < 80 && g.winner === null) { /* loop */ }
+    return g;
+  }
+
+  root.AI = { step: step, fullTurn: fullTurn, score: cardScore };
+})(typeof window !== 'undefined' ? window : globalThis);
