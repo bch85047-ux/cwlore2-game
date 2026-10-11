@@ -69,18 +69,18 @@
 
   /* ---------------- 节点模板 ---------------- */
   var NODE_TEMPLATES = [
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'shop',   ic:'⚱', lb:'商人' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'camp',   ic:'⛺', lb:'营地' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'shop',   ic:'⚱', lb:'商人' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'battle', ic:'⚔', lb:'战斗' },
-    { type:'boss',   ic:'♛', lb:'BOSS' }
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'shop',   ic:'碎', lb:'商人' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'camp',   ic:'营', lb:'营地' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'shop',   ic:'碎', lb:'商人' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'battle', ic:'战', lb:'战斗' },
+    { type:'boss',   ic:'冠', lb:'BOSS' }
   ];
 
   /* 对手权重：BOSS 固定顶尖，普通战斗按梯队加权 */

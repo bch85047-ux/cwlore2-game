@@ -104,19 +104,22 @@
   /* ---------------- 顶部栏 ---------------- */
   function renderTopbar() {
     var tb = $('#topbar');
+    /* 战斗中不显示导航，避免中途切到图鉴等无关界面 */
     var nav = '';
-    if (State.run) {
-      nav = '<button data-scr="run" id="nav-run">⚔ 征途</button>';
+    if (!State.battle) {
+      if (State.run) nav = '<button data-scr="run" id="nav-run">征途</button>';
+      nav += '<button data-scr="lobby" id="nav-lobby">大厅</button>' +
+             '<button data-scr="codex" id="nav-codex">图鉴</button>' +
+             '<button data-scr="meta" id="nav-meta">技能树</button>';
     }
-    nav += '<button data-scr="lobby" id="nav-lobby">大厅</button>' +
-           '<button data-scr="codex" id="nav-codex">图鉴</button>' +
-           '<button data-scr="meta" id="nav-meta">技能树</button>';
     var cur = '';
     if (!State.battle) {
       cur = '<div class="currency">' +
-        '<div title="碎片">⚱ <b>' + State.save.frag + '</b></div>' +
-        '<div class="frag" title="皇冠">♛ <b>' + State.save.gold + '</b></div>' +
+        '<div title="碎片"><span class="ico frag">碎</span><b>' + State.save.frag + '</b></div>' +
+        '<div title="皇冠"><span class="ico gold">冠</span><b>' + State.save.gold + '</b></div>' +
         '</div>';
+    } else {
+      cur = '<button class="end-btn" id="navQuit" style="padding:5px 14px;font-size:11px">退出</button>';
     }
     var sub = State.run
       ? '<small>RUN ' + (State.run.nodeIdx + 1) + '/12 · ' + HD.HEROES[State.run.hero].name + '</small>'
@@ -128,6 +131,8 @@
     tb.querySelectorAll('nav button').forEach(function (b) {
       b.addEventListener('click', function () { go(b.dataset.scr); });
     });
+    var q = $('#navQuit');
+    if (q) q.addEventListener('click', quitBattle);
   }
   /* =====================================================================
    * 卡面渲染（全站共用）
@@ -225,7 +230,7 @@
       var unlocked = !isDlc || State.save.unlocked[k2];
       var cls = 'htile' + (k2 === State.sel ? ' on' : '') + (isDlc ? ' dlc' : '');
       return '<div class="' + cls + '" data-k="' + k2 + '">' +
-        (isDlc ? '<span class="lock">🔒</span>' : '') +
+        (isDlc ? '<span class="lock">锁</span>' : '') +
         '<div class="hst">' + esc(a2.tag) + '</div>' +
         '<div class="av">' + esc(h2.name.charAt(0)) + '</div>' +
         '<div class="hn">' + esc(h2.name) + '</div>' +
@@ -326,54 +331,57 @@
     var heroRow = function (side, isMe) {
       var skCost = E.skillCost(side.hero.ability);
       var canSk = humanTurn && isMe && side.prod >= skCost && !side.skillUsed;
-      return '<div class="b-row">' +
-        (isMe
-          ? '<div class="hero-box">' +
-              '<div class="av">' + esc(side.hero.name.charAt(0)) + '</div>' +
-              '<div class="info">' +
-                '<div class="nm">' + esc(side.name) +
-                  '<span style="font-size:10px;color:var(--dim);margin-left:6px">' + esc(side.hero.title) + '</span>' +
-                '</div>' +
-                '<div class="stats">' +
-                  '<span class="hp">♥ <b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
-                  (side.armor > 0 ? '<span class="arm">⛨ <b>' + side.armor + '</b></span>' : '') +
-                  '<span class="load">⬛ <b>' + side.board.length + '</b>/' + side.load + '</span>' +
-                  '<span>🎴 <b>' + side.hand.length + '</b>/' + side.handMax + '</span>' +
-                  '<span>📚 <b>' + side.deck.length + '</b></span>' +
-                '</div>' +
-                '<div class="pips">' + pips(side) + '</div>' +
+      var skUsed = side.skillUsed ? ' · 已施放' : '';
+      /* 我方英雄：两行布局，第一行头像+信息，第二行技能+说明 */
+      if (isMe) {
+        return '<div class="b-row me-row">' +
+          '<div class="me-top">' +
+            '<div class="av">' + esc(side.hero.name.charAt(0)) + '</div>' +
+            '<div class="me-info">' +
+              '<div class="nm">' + esc(side.name) +
+                '<span class="nm-t">' + esc(side.hero.title) + '</span></div>' +
+              '<div class="stats">' +
+                '<span class="hp"><span class="ico hp">血</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
+                (side.armor > 0 ? '<span class="arm"><span class="ico arm">甲</span><b>' + side.armor + '</b></span>' : '') +
+                '<span class="load"><span class="ico load">位</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
+                '<span><span class="ico hand">手</span><b>' + side.hand.length + '</b>/' + side.handMax + '</span>' +
+                '<span><span class="ico lib">库</span><b>' + side.deck.length + '</b></span>' +
               '</div>' +
             '</div>' +
+            '<div class="pips">' + pips(side) + '</div>' +
+          '</div>' +
+          '<div class="me-skill">' +
             '<button class="skill-btn" data-act="skill"' + (canSk ? '' : ' disabled') + '>' +
-              '【' + esc(side.hero.skillName) + '】 ' + skCost + '⚡' +
-            '</button>'
-          : '<div style="width:150px"></div>') +
-        '<div class="spacer" style="flex:1"></div>' +
-        (!isMe
-          ? '<div class="hero-box' + (humanTurn && sel ? ' tgt-hero' : '') + '" data-act="hero-target"' +
-              (humanTurn && sel ? ' style="cursor:crosshair"' : '') + '>' +
-              '<div class="info" style="text-align:right">' +
-                '<div class="nm">' + esc(side.name) +
-                  '<span style="font-size:10px;color:var(--dim);margin-left:6px">' + esc(side.hero.title) + '</span>' +
-                '</div>' +
-                '<div class="stats">' +
-                  '<span class="hp">♥ <b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
-                  (side.armor > 0 ? '<span class="arm">⛨ <b>' + side.armor + '</b></span>' : '') +
-                  '<span>⬛ <b>' + side.board.length + '</b>/' + side.load + '</span>' +
-                  '<span>🎴 <b>' + side.hand.length + '</b></span>' +
-                  '<span>📚 <b>' + side.deck.length + '</b></span>' +
-                '</div>' +
-                '<div class="pips" style="justify-content:flex-end">' + pips(side) + '</div>' +
-              '</div>' +
-              '<div class="av">' + esc(side.hero.name.charAt(0)) + '</div>' +
-            '</div>'
-          : '<div style="width:150px"></div>') +
+              esc(side.hero.skillName) + '<span class="sk-cost">· ' + skCost + ' 产出</span></button>' +
+            '<div class="skill-desc">' + esc(side.hero.skillDesc) + skUsed + '</div>' +
+          '</div>' +
         '</div>';
+      }
+      /* 敌方英雄：右对齐单行 */
+      return '<div class="b-row">' +
+        '<div class="spacer"></div>' +
+        '<div class="hero-box foe drop-zone' + (humanTurn && sel ? ' tgt-hero' : '') + '" data-act="hero-target"' +
+          (humanTurn && sel ? ' style="cursor:crosshair"' : '') + '>' +
+          '<div class="info">' +
+            '<div class="nm">' + esc(side.name) +
+              '<span class="nm-t">' + esc(side.hero.title) + '</span></div>' +
+            '<div class="stats">' +
+              '<span class="hp"><span class="ico hp">血</span><b>' + side.hp + '</b>/' + side.maxHp + '</span>' +
+              (side.armor > 0 ? '<span class="arm"><span class="ico arm">甲</span><b>' + side.armor + '</b></span>' : '') +
+              '<span class="load"><span class="ico load">位</span><b>' + side.board.length + '</b>/' + side.load + '</span>' +
+              '<span><span class="ico hand">手</span><b>' + side.hand.length + '</b></span>' +
+              '<span><span class="ico lib">库</span><b>' + side.deck.length + '</b></span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="av">' + esc(side.hero.name.charAt(0)) + '</div>' +
+        '</div>' +
+      '</div>';
     };
 
     var unitRow = function (side, isMe) {
+      var sideCls = isMe ? ' mine' : ' enemy';
       if (!side.board.length) {
-        return '<div class="board' + (isMe ? ' mine' : '') + '"><div class="empty">' +
+        return '<div class="board' + sideCls + ' drop-zone"><div class="empty">' +
           (isMe ? '我方战场 · 0/' + side.load : '敌方战场 · 0/' + side.load) + '</div></div>';
       }
       var html = side.board.map(function (u) {
@@ -382,18 +390,17 @@
                   (sel === u.uid ? ' sel' : '') +
                   (!canAtk && isMe ? ' exhausted' : '');
         var kws = (u.kw || []).map(function (k) { return HD.KW[k] ? HD.KW[k].zh : k; }).join(' ');
-        var data = isMe ? ' data-act="unit-mine" data-uid="' + u.uid + '"'
-                        : ' data-act="unit-enemy" data-uid="' + u.uid + '"';
-        return '<div class="' + cls + '"' + data + '>' +
+        var data = 'data-act="' + (isMe ? 'unit-mine' : 'unit-enemy') + '" data-uid="' + u.uid + '"';
+        return '<div class="' + cls + ' drop-zone" ' + data + '>' +
           '<div class="un">' + esc(u.name) + '</div>' +
-          (u.ward ? '<div class="uw">⛨</div>' : '') +
+          (u.ward ? '<div class="uw">盾</div>' : '') +
           (u.pierce ? '<div class="um">穿透</div>' : '') +
           '<div class="row2"><span class="um-atk">' + u.atk + '</span>' +
             '<span class="um-hp">' + u.hp + '</span></div>' +
           (kws ? '<div class="ukw">' + kws + '</div>' : '') +
           '</div>';
       }).join('');
-      return '<div class="board' + (isMe ? ' mine' : '') + '">' +
+      return '<div class="board' + sideCls + ' drop-zone">' +
         '<div class="lane-lbl">' + (isMe ? '我方' : '敌方') + '</div>' +
         '<div class="slots">' + html + '</div></div>';
     };
@@ -406,25 +413,59 @@
     }).join('');
 
     var hint = '';
-    if (sel) hint = '已选中我方单位，点击敌方单位或敌方卡牌师进行攻击。';
-    else if (!humanTurn) hint = '敌方回合。';
-    else hint = '出牌 / 施放技能 / 攻击，或点击「结束回合」。';
+    if (sel) hint = '点击敌方单位或卡牌师攻击。';
+    else if (!humanTurn) hint = '敌方回合…';
+    else hint = '拖拽出牌 / 点技能 / 点单位攻击。';
 
+    /* 左侧日志栏 + 右侧战斗区 */
     s.innerHTML =
-      heroRow(foe, false) +
-      unitRow(foe, false) +
-      unitRow(me, true) +
-      heroRow(me, true) +
-      '<div class="b-row" style="justify-content:space-between;padding:4px 12px 2px">' +
-        '<span style="font-size:11px;color:var(--muted)">' + esc(hint) + '</span>' +
-        '<div style="display:flex;gap:10px;align-items:center">' +
-          '<span style="font-size:11px;color:var(--gold);font-family:var(--serif);letter-spacing:.16em">回合 ' +
-            g.turn + ' · ' + (g.active === 0 ? me.name : foe.name) + '</span>' +
-          '<button class="end-btn" data-act="end"' + (humanTurn ? '' : ' disabled') + '>结束回合</button>' +
+      '<div class="battle-wrap">' +
+        '<aside class="battle-log" id="battleLog">' +
+          '<div class="bl-hd">' +
+            '<span class="bl-tt">日志</span>' +
+            '<span class="bl-turn">回合 ' + g.turn + '</span>' +
+            '<span class="bl-side' + (g.active === 0 ? ' me' : '') + '">' +
+              (g.active === 0 ? '我方回合' : '敌方回合') + '</span>' +
+          '</div>' +
+          '<div class="bl-state">' +
+            '<div class="bl-row"><span class="bl-lbl">我方</span>' +
+              '<b>' + esc(me.name) + '</b>' +
+              '<span class="bl-hp' + (me.hp <= 6 ? ' low' : '') + '">血 ' + me.hp + '</span>' +
+              (me.armor > 0 ? '<span class="bl-arm">甲 ' + me.armor + '</span>' : '') +
+              '<span class="bl-pr">产 ' + me.prod + '/' + me.maxProd + '</span>' +
+              '<span class="bl-bd">场 ' + me.board.length + '</span>' +
+              '<span class="bl-hd2">手 ' + me.hand.length + '</span>' +
+              '<span class="bl-dc">库 ' + me.deck.length + '</span>' +
+            '</div>' +
+            '<div class="bl-row">' +
+              '<span class="bl-lbl">敌方</span>' +
+              '<b>' + esc(foe.name) + '</b>' +
+              '<span class="bl-hp' + (foe.hp <= 6 ? ' low' : '') + '">血 ' + foe.hp + '</span>' +
+              (foe.armor > 0 ? '<span class="bl-arm">甲 ' + foe.armor + '</span>' : '') +
+              '<span class="bl-pr">产 ' + foe.prod + '/' + foe.maxProd + '</span>' +
+              '<span class="bl-bd">场 ' + foe.board.length + '</span>' +
+              '<span class="bl-hd2">手 ' + foe.hand.length + '</span>' +
+              '<span class="bl-dc">库 ' + foe.deck.length + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="bl-body" id="logbar">' + logHTML(g) + '</div>' +
+        '</aside>' +
+        '<div class="battle-main">' +
+          heroRow(foe, false) +
+          unitRow(foe, false) +
+          unitRow(me, true) +
+          heroRow(me, true) +
+          '<div class="b-row" style="justify-content:space-between;padding:4px 12px 2px">' +
+            '<span style="font-size:11px;color:var(--muted)">' + esc(hint) + '</span>' +
+            '<div style="display:flex;gap:10px;align-items:center">' +
+              '<span style="font-size:11px;color:var(--gold);font-family:var(--serif);letter-spacing:.16em;white-space:nowrap">回合 ' +
+                g.turn + ' · ' + (g.active === 0 ? me.name : foe.name) + '</span>' +
+              '<button class="end-btn" data-act="end"' + (humanTurn ? '' : ' disabled') + '>结束回合</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="hand" id="hand">' + (handHTML || '<div class="empty-hint">手牌为空</div>') + '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="hand" id="hand">' + (handHTML || '<div class="empty-hint">手牌为空</div>') + '</div>' +
-      '<div class="logbar" id="logbar">' + logHTML(g) + '</div>';
+      '</div>';
 
     bindBattle();
     var lb = $('#logbar');
@@ -432,7 +473,7 @@
   }
 
   function logHTML(g) {
-    var items = g.log.slice(-40);
+    var items = g.log.slice(-120);
     return items.map(function (l) {
       var cls = l.who === '系统' ? 'sys' : '';
       var mark = '';
@@ -446,20 +487,126 @@
     s.querySelectorAll('[data-act]').forEach(function (b) {
       b.addEventListener('click', onBattleAct);
     });
+    /* 手牌：拖拽打出（主）+ 点击打出（兼容） */
     var hand = $('#hand');
     if (hand) {
       hand.querySelectorAll('.card.h').forEach(function (c) {
+        var i = parseInt(c.getAttribute('data-i'), 10);
+        if (isNaN(i)) return;
         c.addEventListener('click', onHandCard);
+        c.addEventListener('pointerdown', function (e) {
+          if (e.button !== undefined && e.button !== 0) return;
+          Drag.start(e, i);
+        });
       });
     }
   }
 
+  /* =====================================================================
+   * 拖拽出牌：pointer events，桌面与触屏通用
+   *   单位卡 → 拖到我方战场 = 入场
+   *   法术卡 → 拖到敌方单位或敌方卡牌师 = 施放（带目标）
+   *   拖起但未落到有效区域 = 取消
+   * =================================================================== */
+  var Drag = {
+    on: false, idx: -1, ghost: null, x0: 0, y0: 0, moved: false,
+    card: null, zone: null,
+
+    start: function (e, idx) {
+      if (!isHumanTurn()) return;
+      var g = cur(), me = g.p[0];
+      var c = CD.get(me.hand[idx]) || CD.CARDS[me.hand[idx]];
+      if (!c) return;
+      if (c.cost > me.prod) { toast('产出不足。'); return; }
+      if (c.t === 'u' && me.board.length >= me.load) { toast('战场已满。'); return; }
+      this.on = true; this.idx = idx; this.card = c; this.moved = false;
+      this.x0 = e.clientX; this.y0 = e.clientY;
+      this.t0 = e.pointerId;
+      var gh = document.createElement('div');
+      gh.className = 'drag-ghost';
+      gh.innerHTML = cardHTML(c, {});
+      document.body.appendChild(gh);
+      this.ghost = gh;
+      gh.style.display = 'none';
+      document.addEventListener('pointermove', Drag.move, { passive: false });
+      document.addEventListener('pointerup', Drag.up);
+      document.addEventListener('pointercancel', Drag.up);
+    },
+
+    move: function (e) {
+      if (!Drag.on) return;
+      var dx = e.clientX - Drag.x0, dy = e.clientY - Drag.y0;
+      if (!Drag.moved && Math.sqrt(dx * dx + dy * dy) > 6) {
+        Drag.moved = true;
+        if (Drag.ghost) Drag.ghost.style.display = 'block';
+      }
+      if (Drag.moved) {
+        e.preventDefault();   /* 阻止页面滚动 / 选择 */
+        if (Drag.ghost) {
+          Drag.ghost.style.left = (e.clientX - 48) + 'px';
+          Drag.ghost.style.top = (e.clientY - 40) + 'px';
+        }
+        /* 高亮悬停区 */
+        var prev = Drag.zone;
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        var z = el ? el.closest('.drop-zone') : null;
+        Drag.zone = z || null;
+        if (prev && prev !== z) prev.classList.remove('over');
+        if (z) z.classList.add('over');
+      }
+    },
+
+    up: function (e) {
+      if (!Drag.on) return;
+      document.removeEventListener('pointermove', Drag.move);
+      document.removeEventListener('pointerup', Drag.up);
+      document.removeEventListener('pointercancel', Drag.up);
+      document.querySelectorAll('.drop-zone.over').forEach(function (z) {
+        z.classList.remove('over'); delete z.dataset.zone;
+      });
+      var played = false;
+      if (Drag.moved && Drag.zone && Drag.card) {
+        /* 所有法术均为全场/随机结算，不指定目标；
+           单位卡落在任何战场区即入场，法术落在敌侧任意位置即施放。 */
+        played = tryPlay(Drag.idx);
+      }
+      if (Drag.ghost) Drag.ghost.remove();
+      document.querySelectorAll('.drop-zone.over').forEach(function (z) {
+        z.classList.remove('over'); delete z.dataset.zone;
+      });
+      /* 拖拽结束后紧随的 click 事件要忽略，否则会重复出牌 */
+      if (Drag.moved) {
+        Drag.justDragged = true;
+        setTimeout(function () { Drag.justDragged = false; }, 0);
+      }
+      Drag.on = false; Drag.idx = -1; Drag.card = null; Drag.zone = null;
+    }
+  };
+  function tryPlay(idx) {
+    var g = cur(), me = g.p[0];
+    var r = E.playCard(g, 0, idx);
+    if (!r.ok) { toast(r.err); return false; }
+    renderBattle();
+    checkHumanWon();
+    return true;
+  }
+
+  function quitBattle() {
+    if (!State.battle) return;
+    State.battle = null; State.selUnit = null;
+    $('#result').classList.remove('on');
+    go('run');
+  }
+
   function onHandCard(ev) {
+    /* 拖拽结束后的一次 click 由拖拽逻辑处理，这里忽略 */
+    if (Drag.justDragged) return;
     if (!isHumanTurn()) return;
     var i = parseInt(this.getAttribute('data-i'), 10);
     if (isNaN(i)) return;
     var g = cur(), me = g.p[0];
     var c = CD.get(me.hand[i]) || CD.CARDS[me.hand[i]];
+    if (!c) return;
     var r = E.playCard(g, 0, i);
     if (!r.ok) { toast(r.err); return; }
     renderBattle();
@@ -477,6 +624,8 @@
       E.endPlayerTurn(g, 0);
       renderBattle();
       checkHumanWon();
+      /* 玩家回合结束 → 交给 AI */
+      playAIGame();
       return;
     }
     if (act === 'skill') {
@@ -556,7 +705,8 @@
     var g = cur();
     if (!g) return;
     if (g.winner !== null) return;
-    if (g.active !== 1) { runAITurn(); return; }
+    /* active===1 → 敌方回合，交给 AI；active===0 → 玩家回合，等玩家操作 */
+    if (g.active === 1) { runAITurn(); }
   }
   function runAITurn() {
     var g = cur();
@@ -674,23 +824,23 @@
 
   function nodeDesc(node, opp) {
     if (node.type === 'boss') {
-      return '<div class="shop-item"><div class="si-ic">♛</div>' +
+      return '<div class="shop-item"><div class="si-ic">冠</div>' +
         '<div class="si-bd"><div class="si-n">BOSS · ' + esc(opp.name) + '</div>' +
         '<div class="si-d">' + esc(opp.trait) + '</div>' +
         '<div class="si-f">胜利奖励：碎片 +1500，无需改造</div></div></div>';
     }
     if (node.type === 'battle') {
-      return '<div class="shop-item"><div class="si-ic">⚔</div>' +
+      return '<div class="shop-item"><div class="si-ic">战</div>' +
         '<div class="si-bd"><div class="si-n">' + esc(opp.name) + '（' + esc(opp.tier) + '）</div>' +
         '<div class="si-d">' + esc(opp.trait) + '</div>' +
         '<div class="si-f">胜利奖励：碎片 400–900 + 免费改造 ×1</div></div></div>';
     }
     if (node.type === 'shop') {
-      return '<div class="shop-item"><div class="si-ic">⚱</div>' +
+      return '<div class="shop-item"><div class="si-ic">碎</div>' +
         '<div class="si-bd"><div class="si-n">商人</div>' +
         '<div class="si-d">用碎片购买改造。同一商人连续购买，价格每次 +50%。</div></div></div>';
     }
-    return '<div class="shop-item"><div class="si-ic">⛺</div>' +
+    return '<div class="shop-item"><div class="si-ic">营</div>' +
       '<div class="si-bd"><div class="si-n">营地</div>' +
       '<div class="si-d">休整：免费改造 ×1，不消耗碎片。</div></div></div>';
   }
@@ -829,7 +979,7 @@
     var c = Object.keys(run.mods);
     return '<div class="sel-card">' +
       '<div class="nm" style="font-size:16px">碎片</div>' +
-      '<div class="tt">⚱ ' + run.frag + '</div>' +
+      '<div class="tt">碎 ' + run.frag + '</div>' +
       '<div class="row" style="margin-top:10px"><span>已改造卡</span><b>' + c.length + '</b></div>' +
       '<div class="row"><span>总改造次数</span><b>' + c.reduce(function (t, k) {
         return t + run.mods[k].length; }, 0) + '</b></div>' +
@@ -880,7 +1030,7 @@
             (it.base !== it.price ? '（原价 ' + it.base + '，连买涨价）' : '') +
           '</div>' +
         '</div>' +
-        '<div class="si-r"><div class="price frag">⚱ ' + it.price + '</div>' +
+        '<div class="si-r"><div class="price frag">碎 ' + it.price + '</div>' +
           '<button class="buy" data-i="' + i + '"' + (dis ? ' disabled' : '') + '>购买</button></div>' +
       '</div>';
     }).join('');
@@ -891,7 +1041,7 @@
       '<div style="margin-top:14px"><button class="end-btn" id="sLeave">离开商人</button></div>' +
       '</main><aside class="shop-side">' +
       '<div class="sel-card"><div class="nm" style="font-size:16px">碎片</div>' +
-        '<div class="tt">⚱ ' + run.frag + '</div></div>' +
+        '<div class="tt">碎 ' + run.frag + '</div></div>' +
       '<div class="sel-card"><div class="nm" style="font-size:16px">已改造</div>' +
         '<div class="tt">' + Object.keys(run.mods).length + ' 张卡</div>' +
         modLogHTML() + '</div>' +
@@ -1064,7 +1214,7 @@
       html += '<div class="shop-item"><div class="si-ic">' + esc(m.n.charAt(0)) + '</div>' +
         '<div class="si-bd"><div class="si-n">' + esc(m.n) + '</div>' +
         '<div class="si-d">' + esc(m.d) + '</div>' +
-        '<div class="si-f">商人标价 ⚱ ' + m.price + '</div>' +
+        '<div class="si-f">商人标价 碎 ' + m.price + '</div>' +
         '</div></div>';
     });
     main.innerHTML = html;
@@ -1076,7 +1226,7 @@
       html += '<div class="shop-item"><div class="si-ic">' + esc(p.n.charAt(0)) + '</div>' +
         '<div class="si-bd"><div class="si-n">' + esc(p.n) + '</div>' +
         '<div class="si-d">' + esc(p.d) + '</div>' +
-        '<div class="si-f">♛ ' + p.cost + '</div>' +
+        '<div class="si-f">冠 ' + p.cost + '</div>' +
         '</div></div>';
     });
     main.innerHTML = html;
@@ -1095,7 +1245,7 @@
         '<div class="si-ic">' + (owned ? '✓' : esc(p.n.charAt(0))) + '</div>' +
         '<div class="si-bd"><div class="si-n">' + esc(p.n) + '</div>' +
         '<div class="si-d">' + esc(p.d) + '</div>' +
-        '<div class="si-f">' + (owned ? '已解锁' : '♛ ' + p.cost) + '</div></div>' +
+        '<div class="si-f">' + (owned ? '已解锁' : '冠 ' + p.cost) + '</div></div>' +
         '<div class="si-r"><button class="buy" data-id="' + p.id + '"' +
           (can ? '' : ' disabled') + '>' + (owned ? '已拥有' : '解锁') + '</button></div>' +
       '</div>';
@@ -1105,7 +1255,7 @@
         '<span class="cnt">800 碎片 = 1 皇冠</span></div>' + items + '</main>' +
       '<aside class="shop-side">' +
         '<div class="sel-card"><div class="nm" style="font-size:16px">皇冠</div>' +
-          '<div class="tt">♛ ' + stats.gold + '</div>' +
+          '<div class="tt">冠 ' + stats.gold + '</div>' +
           '<div class="row" style="margin-top:10px"><span>碎片</span><b>' + stats.frag + '</b></div>' +
           '<div class="row"><span>已解锁</span><b>' +
             Object.keys(stats.perm).length + '/' + RL.PERM_SKILLS.length + '</b></div></div>' +
